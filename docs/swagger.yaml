@@ -1,0 +1,209 @@
+definitions:
+  main.Item:
+    properties:
+      arr_owner_address:
+        properties:
+          0xce85a994e411901fc9bda228d07f7b66f8320ecd:
+            type: integer
+        type: object
+      arr_owner_uid:
+        properties:
+          "221139":
+            type: integer
+        type: object
+      category_type:
+        type: integer
+      chain:
+        type: string
+      collection_id:
+        type: integer
+      contract_address:
+        type: string
+      create_time:
+        type: integer
+      creator_address:
+        type: string
+      creator_uid:
+        type: integer
+      currency_address:
+        properties:
+          address:
+            type: string
+          chain:
+            type: string
+          decimal:
+            type: integer
+          img:
+            type: string
+          name:
+            type: string
+          status:
+            type: boolean
+          symbol:
+            type: string
+        type: object
+      edition:
+        type: integer
+      end_at:
+        type: integer
+      event_ids:
+        items:
+          type: integer
+        type: array
+      extend_data:
+        properties:
+          category:
+            type: string
+          collection:
+            type: string
+          create:
+            type: string
+          like:
+            type: string
+          owner:
+            type: string
+          total_offer:
+            type: string
+        type: object
+      external_link:
+        type: string
+      hidden:
+        type: boolean
+      id:
+        type: integer
+      image_url:
+        type: string
+      is_loot_box:
+        type: boolean
+      is_sensitive:
+        type: boolean
+      media_type:
+        type: integer
+      meta_data:
+        type: string
+      name:
+        type: string
+      owner_address:
+        type: string
+      owner_uid:
+        type: integer
+      price:
+        type: string
+      product_no:
+        type: string
+      start_at:
+        type: integer
+      status:
+        type: integer
+      token_id:
+        type: string
+      total_claim:
+        type: integer
+      total_edition:
+        type: integer
+      total_like:
+        type: integer
+      total_limit:
+        type: integer
+      total_view:
+        type: integer
+      type_nft:
+        type: integer
+      unlockable_content:
+        type: string
+      update_time:
+        type: integer
+      uri:
+        type: string
+      url:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /addItem:
+    post:
+      consumes:
+      - application/json
+      description: do ping
+      parameters:
+      - description: 'Thông tin item mới '
+        in: body
+        name: NewItem
+        required: true
+        schema:
+          $ref: '#/definitions/main.Item'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Item'
+      summary: ping example
+      tags:
+      - Item
+  /delete/:id:
+    delete:
+      consumes:
+      - application/json
+      description: do ping
+      parameters:
+      - description: 'Id cần xóa  '
+        in: path
+        name: ID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Item'
+      summary: ping example
+      tags:
+      - Item
+  /editItem/:id:
+    put:
+      consumes:
+      - application/json
+      description: do ping
+      parameters:
+      - description: ID cần sửa
+        in: path
+        name: Id
+        required: true
+        type: integer
+      - description: Thông tin cần sửa
+        in: body
+        name: ItemEdit
+        required: true
+        schema:
+          $ref: '#/definitions/main.Item'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Item'
+      summary: ping example
+      tags:
+      - Item
+  /item:
+    get:
+      consumes:
+      - application/json
+      description: do ping
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Item'
+      summary: ping example
+      tags:
+      - Item
+swagger: "2.0"
