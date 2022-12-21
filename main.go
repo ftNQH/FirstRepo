@@ -2,10 +2,15 @@ package main
 
 import (
 	"awesomeProject/docs"
+	"context"
+	json2 "encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v9"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
@@ -180,7 +185,28 @@ var items = []Item{{
 },
 }
 
+var ctx = context.Background()
+var client = redis.NewClient(&redis.Options{
+	Addr:     "localhost:6379",
+	Password: "",
+	DB:       0,
+})
+
 func main() {
+	//Gán dữ liệu của mảng ban đầu vào trong redis
+	json, err := json2.Marshal(items)
+	if err != nil {
+		fmt.Println(err)
+	}
+	err = client.Set(ctx, "item", json, 0).Err()
+	if err != nil {
+		fmt.Println(err)
+	}
+	val, err := client.Get(ctx, "item").Result()
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(val)
 
 	r := gin.Default()
 	docs.SwaggerInfo.BasePath = ""
@@ -204,6 +230,7 @@ func main() {
 // @Success 200 {object} Item
 // @Router /item [get]
 func getItems(c *gin.Context) {
+	client.ZRange(ctx, "item", 0, -1)
 	c.IndentedJSON(http.StatusOK, items)
 }
 
@@ -223,8 +250,12 @@ func newItems(c *gin.Context) {
 	if err := c.BindJSON(&NewItem); err != nil {
 		return
 	}
-
 	items = append(items, NewItem)
+
+	_, err := client.ZAdd(ctx, "item", redis.Z{Score: float64(NewItem.Id), Member: NewItem}).Result()
+	if err != nil {
+		log.Fatalf("Error adding %s", items)
+	}
 	c.IndentedJSON(http.StatusCreated, items)
 
 }
@@ -251,7 +282,10 @@ func deleteItems(c *gin.Context) {
 			} else {
 				items = append(items[:i], items[i+1:]...)
 			}
-
+			_, err := client.ZRem(ctx, "item", items[i]).Result()
+			if err != nil {
+				log.Fatalf("Error delete %s", items)
+			}
 			c.IndentedJSON(http.StatusOK, items)
 			return
 		}
@@ -284,7 +318,15 @@ func editItems(c *gin.Context) {
 			c.IndentedJSON(http.StatusOK, items)
 			return
 		}
-
+		_, err := client.ZRem(ctx, "item", items[i]).Result()
+		if err != nil {
+			log.Fatalf("Error delete %s", items)
+		}
+		_, err = client.ZAdd(ctx, "item", redis.Z{Score: float64(ItemEdit.Id), Member: ItemEdit}).Result()
+		if err != nil {
+			log.Fatalf("Error adding %s", items)
+		}
 	}
+
 	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "item does not exist"})
 }
