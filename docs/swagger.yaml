@@ -118,10 +118,92 @@ definitions:
       url:
         type: string
     type: object
+  main.User:
+    properties:
+      app:
+        type: string
+      avatar:
+        type: string
+      background:
+        type: string
+      bio:
+        type: string
+      block:
+        type: boolean
+      blockchain_address:
+        type: string
+      can_mint:
+        type: boolean
+      country_code:
+        type: string
+      create_time:
+        type: integer
+      deleted:
+        type: boolean
+      email:
+        type: string
+      extend_data:
+        type: object
+      facebook:
+        type: string
+      instagram:
+        type: string
+      is_partner:
+        type: boolean
+      language:
+        type: string
+      name:
+        type: string
+      pubkey:
+        type: string
+      total_followers:
+        type: integer
+      total_following:
+        type: integer
+      twitter:
+        type: string
+      type_user:
+        type: integer
+      uid:
+        type: integer
+      update_time:
+        type: integer
+      username:
+        type: string
+      verify:
+        type: boolean
+      vip:
+        type: integer
+      youtube:
+        type: string
+    type: object
 info:
   contact: {}
 paths:
-  /addItem:
+  /item:
+    get:
+      consumes:
+      - application/json
+      description: do ping
+      parameters:
+      - description: position
+        in: query
+        name: pos
+        type: integer
+      - description: count
+        in: query
+        name: count
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Item'
+      summary: ping example
+      tags:
+      - Item
     post:
       consumes:
       - application/json
@@ -143,7 +225,7 @@ paths:
       summary: ping example
       tags:
       - Item
-  /delete/:id:
+  /item/:id:
     delete:
       consumes:
       - application/json
@@ -164,7 +246,6 @@ paths:
       summary: ping example
       tags:
       - Item
-  /editItem/:id:
     put:
       consumes:
       - application/json
@@ -172,7 +253,7 @@ paths:
       parameters:
       - description: ID cần sửa
         in: path
-        name: Id
+        name: ID
         required: true
         type: integer
       - description: Thông tin cần sửa
@@ -191,18 +272,25 @@ paths:
       summary: ping example
       tags:
       - Item
-  /item:
-    get:
+  /user:
+    post:
       consumes:
       - application/json
       description: do ping
+      parameters:
+      - description: 'Thông tin user mới '
+        in: body
+        name: NewUser
+        required: true
+        schema:
+          $ref: '#/definitions/main.User'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/main.Item'
+            $ref: '#/definitions/main.User'
       summary: ping example
       tags:
       - Item

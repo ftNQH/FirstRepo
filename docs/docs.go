@@ -16,7 +16,42 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/addItem": {
+        "/item": {
+            "get": {
+                "description": "do ping",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Item"
+                ],
+                "summary": "ping example",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "position",
+                        "name": "pos",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "count",
+                        "name": "count",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.Item"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "do ping",
                 "consumes": [
@@ -50,7 +85,46 @@ const docTemplate = `{
                 }
             }
         },
-        "/delete/:id": {
+        "/item/:id": {
+            "put": {
+                "description": "do ping",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Item"
+                ],
+                "summary": "ping example",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID cần sửa",
+                        "name": "ID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin cần sửa",
+                        "name": "ItemEdit",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/main.Item"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.Item"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "description": "do ping",
                 "consumes": [
@@ -82,8 +156,8 @@ const docTemplate = `{
                 }
             }
         },
-        "/editItem/:id": {
-            "put": {
+        "/user": {
+            "post": {
                 "description": "do ping",
                 "consumes": [
                     "application/json"
@@ -97,19 +171,12 @@ const docTemplate = `{
                 "summary": "ping example",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "ID cần sửa",
-                        "name": "Id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Thông tin cần sửa",
-                        "name": "ItemEdit",
+                        "description": "Thông tin user mới ",
+                        "name": "NewUser",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/main.Item"
+                            "$ref": "#/definitions/main.User"
                         }
                     }
                 ],
@@ -117,30 +184,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/main.Item"
-                        }
-                    }
-                }
-            }
-        },
-        "/item": {
-            "get": {
-                "description": "do ping",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Item"
-                ],
-                "summary": "ping example",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/main.Item"
+                            "$ref": "#/definitions/main.User"
                         }
                     }
                 }
@@ -325,6 +369,95 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "main.User": {
+            "type": "object",
+            "properties": {
+                "app": {
+                    "type": "string"
+                },
+                "avatar": {
+                    "type": "string"
+                },
+                "background": {
+                    "type": "string"
+                },
+                "bio": {
+                    "type": "string"
+                },
+                "block": {
+                    "type": "boolean"
+                },
+                "blockchain_address": {
+                    "type": "string"
+                },
+                "can_mint": {
+                    "type": "boolean"
+                },
+                "country_code": {
+                    "type": "string"
+                },
+                "create_time": {
+                    "type": "integer"
+                },
+                "deleted": {
+                    "type": "boolean"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "extend_data": {
+                    "type": "object"
+                },
+                "facebook": {
+                    "type": "string"
+                },
+                "instagram": {
+                    "type": "string"
+                },
+                "is_partner": {
+                    "type": "boolean"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "pubkey": {
+                    "type": "string"
+                },
+                "total_followers": {
+                    "type": "integer"
+                },
+                "total_following": {
+                    "type": "integer"
+                },
+                "twitter": {
+                    "type": "string"
+                },
+                "type_user": {
+                    "type": "integer"
+                },
+                "uid": {
+                    "type": "integer"
+                },
+                "update_time": {
+                    "type": "integer"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "verify": {
+                    "type": "boolean"
+                },
+                "vip": {
+                    "type": "integer"
+                },
+                "youtube": {
                     "type": "string"
                 }
             }

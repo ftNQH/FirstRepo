@@ -184,6 +184,7 @@ var items = []Item{{
 	IsLootBox:         false,
 },
 }
+var users = []User{}
 
 var ctx = context.Background()
 var client = redis.NewClient(&redis.Options{
@@ -202,21 +203,16 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	val, err := client.Get(ctx, "item").Result()
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(val)
 
 	r := gin.Default()
 	docs.SwaggerInfo.BasePath = ""
 
-	r.POST("/addItem", newItems)
+	r.POST("/item", newItems)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 	r.GET("/item", getItems)
-	r.DELETE("/delete/:id", deleteItems)
-	r.PUT("/editItem/:id", editItems)
-	/*		r.POST("newUser",addUser)*/
+	r.DELETE("/item/:id", deleteItems)
+	r.PUT("/item/:id", editItems)
+	r.POST("/user", addUser)
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
 
@@ -227,11 +223,16 @@ func main() {
 // @Tags Item
 // @Accept json
 // @Produce json
+// @Param pos query int64 false "position"
+// @Param count query int64 false "count"
 // @Success 200 {object} Item
 // @Router /item [get]
 func getItems(c *gin.Context) {
-	client.ZRange(ctx, "item", 0, -1)
-	c.IndentedJSON(http.StatusOK, items)
+	pos, _ := strconv.Atoi(c.Param("pos"))
+	count, _ := strconv.Atoi(c.Param("count"))
+
+	val, _ := client.ZRange(ctx, "item", int64(pos), int64(pos+count)).Result()
+	c.IndentedJSON(http.StatusOK, val)
 }
 
 // PingExample godoc
@@ -243,7 +244,7 @@ func getItems(c *gin.Context) {
 // @Param NewItem body Item true "Thông tin item mới "
 // @Produce json
 // @Success 200 {object} Item
-// @Router /addItem [post]
+// @Router /item [post]
 func newItems(c *gin.Context) {
 	var NewItem Item
 
@@ -269,7 +270,7 @@ func newItems(c *gin.Context) {
 // @Param ID path int true "Id cần xóa  "
 // @Produce json
 // @Success 200 {object} Item
-// @Router /delete/:id [delete]
+// @Router /item/:id [delete]
 func deleteItems(c *gin.Context) {
 	id := c.Param("id")
 	t, _ := strconv.Atoi(id)
@@ -286,7 +287,7 @@ func deleteItems(c *gin.Context) {
 			if err != nil {
 				log.Fatalf("Error delete %s", items)
 			}
-			c.IndentedJSON(http.StatusOK, items)
+			c.IndentedJSON(http.StatusNoContent, items)
 			return
 		}
 	}
@@ -299,11 +300,11 @@ func deleteItems(c *gin.Context) {
 // @Description do ping
 // @Tags Item
 // @Accept json
-// @Param Id path int true "ID cần sửa"
+// @Param ID path int true "ID cần sửa"
 // @Param ItemEdit body Item true "Thông tin cần sửa"
 // @Produce json
 // @Success 200 {object} Item
-// @Router /editItem/:id [put]
+// @Router /item/:id [put]
 func editItems(c *gin.Context) {
 	id := c.Param("id")
 	t, _ := strconv.Atoi(id)
@@ -315,18 +316,44 @@ func editItems(c *gin.Context) {
 	for i, a := range items {
 		if a.Id == t {
 			items[i] = ItemEdit
+			_, err := client.ZRem(ctx, "item", items[i]).Result()
+			if err != nil {
+				log.Fatalf("Error delete %s", items)
+			}
+			_, err = client.ZAdd(ctx, "item", redis.Z{Score: float64(ItemEdit.Id), Member: ItemEdit}).Result()
+			if err != nil {
+				log.Fatalf("Error adding %s", items)
+			}
 			c.IndentedJSON(http.StatusOK, items)
 			return
-		}
-		_, err := client.ZRem(ctx, "item", items[i]).Result()
-		if err != nil {
-			log.Fatalf("Error delete %s", items)
-		}
-		_, err = client.ZAdd(ctx, "item", redis.Z{Score: float64(ItemEdit.Id), Member: ItemEdit}).Result()
-		if err != nil {
-			log.Fatalf("Error adding %s", items)
 		}
 	}
 
 	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "item does not exist"})
+}
+
+// PingExample godoc
+// @Summary ping example
+// @Schemes
+// @Description do ping
+// @Tags Item
+// @Accept json
+// @Param NewUser body User true "Thông tin user mới "
+// @Produce json
+// @Success 200 {object} User
+// @Router /user [post]
+func addUser(c *gin.Context) {
+	var NewUser User
+
+	if err := c.BindJSON(&NewUser); err != nil {
+		return
+	}
+	users = append(users, NewUser)
+
+	val, err := client.ZAdd(ctx, "user", redis.Z{Score: float64(NewUser.Uid), Member: NewUser}).Result()
+	if err != nil {
+		log.Fatalf("Error adding %s", users)
+	}
+	c.IndentedJSON(http.StatusCreated, val)
+
 }
