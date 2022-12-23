@@ -85,7 +85,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/item/:id": {
+        "/item/": {
             "put": {
                 "description": "do ping",
                 "consumes": [
@@ -103,7 +103,7 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "ID cần sửa",
                         "name": "ID",
-                        "in": "path",
+                        "in": "query",
                         "required": true
                     },
                     {
@@ -141,8 +141,8 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Id cần xóa  ",
-                        "name": "ID",
-                        "in": "path",
+                        "name": "id",
+                        "in": "query",
                         "required": true
                     }
                 ],

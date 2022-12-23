@@ -3,11 +3,12 @@ package main
 import (
 	"awesomeProject/docs"
 	"context"
-	json2 "encoding/json"
-	"fmt"
+	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v9"
@@ -194,15 +195,6 @@ var client = redis.NewClient(&redis.Options{
 })
 
 func main() {
-	//Gán dữ liệu của mảng ban đầu vào trong redis
-	json, err := json2.Marshal(items)
-	if err != nil {
-		fmt.Println(err)
-	}
-	err = client.Set(ctx, "item", json, 0).Err()
-	if err != nil {
-		fmt.Println(err)
-	}
 
 	r := gin.Default()
 	docs.SwaggerInfo.BasePath = ""
@@ -210,8 +202,8 @@ func main() {
 	r.POST("/item", newItems)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 	r.GET("/item", getItems)
-	r.DELETE("/item/:id", deleteItems)
-	r.PUT("/item/:id", editItems)
+	r.DELETE("/item/", deleteItems)
+	r.PUT("/item/", editItems)
 	r.POST("/user", addUser)
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
@@ -228,10 +220,11 @@ func main() {
 // @Success 200 {object} Item
 // @Router /item [get]
 func getItems(c *gin.Context) {
-	pos, _ := strconv.Atoi(c.Param("pos"))
-	count, _ := strconv.Atoi(c.Param("count"))
-
-	val, _ := client.ZRange(ctx, "item", int64(pos), int64(pos+count)).Result()
+	pos, _ := c.GetQuery("pos")
+	cou, _ := c.GetQuery("count")
+	position, _ := strconv.Atoi(pos)
+	count, _ := strconv.Atoi(cou)
+	val, _ := client.ZRange(ctx, "item", int64(position), int64(position+count)).Result()
 	c.IndentedJSON(http.StatusOK, val)
 }
 
@@ -247,15 +240,28 @@ func getItems(c *gin.Context) {
 // @Router /item [post]
 func newItems(c *gin.Context) {
 	var NewItem Item
-
 	if err := c.BindJSON(&NewItem); err != nil {
 		return
 	}
-	items = append(items, NewItem)
-
-	_, err := client.ZAdd(ctx, "item", redis.Z{Score: float64(NewItem.Id), Member: NewItem}).Result()
+	val, err := client.ZRangeByScore(ctx, "item", &redis.ZRangeBy{
+		Min:    strconv.Itoa(NewItem.Id),
+		Max:    strconv.Itoa(NewItem.Id),
+		Offset: 0,
+		Count:  2,
+	}).Result()
 	if err != nil {
-		log.Fatalf("Error adding %s", items)
+		logrus.Errorln(err)
+		return
+	}
+	if len(val) != 0 {
+		logrus.Errorln("Đã tồn tại id này")
+		return
+	}
+
+	bData, _ := json.Marshal(NewItem)
+	_, err = client.ZAdd(ctx, "item", redis.Z{Score: float64(NewItem.Id), Member: bData}).Result()
+	if err != nil {
+		logrus.Errorln(err)
 	}
 	c.IndentedJSON(http.StatusCreated, items)
 
@@ -267,31 +273,32 @@ func newItems(c *gin.Context) {
 // @Description do ping
 // @Tags Item
 // @Accept json
-// @Param ID path int true "Id cần xóa  "
+// @Param id query int true "Id cần xóa  "
 // @Produce json
 // @Success 200 {object} Item
-// @Router /item/:id [delete]
+// @Router /item/ [delete]
 func deleteItems(c *gin.Context) {
-	id := c.Param("id")
-	t, _ := strconv.Atoi(id)
-	for i, a := range items {
-		if a.Id == t {
-			if i == 0 {
-				items = items[1:]
-			} else if i == len(items) {
-				items = items[:len(items)-1]
-			} else {
-				items = append(items[:i], items[i+1:]...)
-			}
-			_, err := client.ZRem(ctx, "item", items[i]).Result()
-			if err != nil {
-				log.Fatalf("Error delete %s", items)
-			}
-			c.IndentedJSON(http.StatusNoContent, items)
-			return
+	id, _ := c.GetQuery("id")
+	val, err := client.ZRangeByScore(ctx, "item", &redis.ZRangeBy{
+		Min:    id,
+		Max:    id,
+		Offset: 0,
+		Count:  2,
+	}).Result()
+	if err != nil {
+		logrus.Errorln(err)
+		return
+	}
+	if len(val) != 0 {
+		_, err = client.ZRem(ctx, "item", val).Result()
+		if err != nil {
+			log.Fatalf("Error delete %s", val)
 		}
+		c.IndentedJSON(http.StatusNoContent, items)
+		return
 	}
 	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "item does not exist"})
+	return
 }
 
 // PingExample godoc
@@ -300,33 +307,43 @@ func deleteItems(c *gin.Context) {
 // @Description do ping
 // @Tags Item
 // @Accept json
-// @Param ID path int true "ID cần sửa"
+// @Param ID query int true "ID cần sửa"
 // @Param ItemEdit body Item true "Thông tin cần sửa"
 // @Produce json
 // @Success 200 {object} Item
-// @Router /item/:id [put]
+// @Router /item/ [put]
 func editItems(c *gin.Context) {
-	id := c.Param("id")
-	t, _ := strconv.Atoi(id)
+	id, _ := c.GetQuery("ID")
 	var ItemEdit Item
-
 	if err := c.BindJSON(&ItemEdit); err != nil {
 		return
 	}
-	for i, a := range items {
-		if a.Id == t {
-			items[i] = ItemEdit
-			_, err := client.ZRem(ctx, "item", items[i]).Result()
-			if err != nil {
-				log.Fatalf("Error delete %s", items)
-			}
-			_, err = client.ZAdd(ctx, "item", redis.Z{Score: float64(ItemEdit.Id), Member: ItemEdit}).Result()
-			if err != nil {
-				log.Fatalf("Error adding %s", items)
-			}
-			c.IndentedJSON(http.StatusOK, items)
+	val, err := client.ZRangeByScore(ctx, "item", &redis.ZRangeBy{
+		Min:    id,
+		Max:    id,
+		Offset: 0,
+		Count:  2,
+	}).Result()
+	logrus.Errorln(id)
+	logrus.Errorln(val)
+	if err != nil {
+		logrus.Errorln(err)
+		return
+	}
+	if len(val) != 0 {
+		_, err := client.ZRem(ctx, "item", val).Result()
+		if err != nil {
+			logrus.Errorln("Error delete %s")
 			return
 		}
+		bData, _ := json.Marshal(ItemEdit)
+		_, err = client.ZAdd(ctx, "item", redis.Z{Score: float64(ItemEdit.Id), Member: bData}).Result()
+		if err != nil {
+			logrus.Errorln("Error adding ", err)
+			return
+		}
+		c.IndentedJSON(http.StatusOK, items)
+		return
 	}
 
 	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "item does not exist"})
@@ -344,16 +361,29 @@ func editItems(c *gin.Context) {
 // @Router /user [post]
 func addUser(c *gin.Context) {
 	var NewUser User
-
 	if err := c.BindJSON(&NewUser); err != nil {
 		return
 	}
-	users = append(users, NewUser)
-
-	val, err := client.ZAdd(ctx, "user", redis.Z{Score: float64(NewUser.Uid), Member: NewUser}).Result()
+	val, err := client.ZRangeByScore(ctx, "user", &redis.ZRangeBy{
+		Min:    strconv.Itoa(NewUser.Uid),
+		Max:    strconv.Itoa(NewUser.Uid),
+		Offset: 0,
+		Count:  2,
+	}).Result()
 	if err != nil {
-		log.Fatalf("Error adding %s", users)
+		logrus.Errorln(err)
+		return
 	}
-	c.IndentedJSON(http.StatusCreated, val)
+	if len(val) != 0 {
+		logrus.Errorln("Đã tồn tại id này")
+		return
+	}
+
+	bData, _ := json.Marshal(NewUser)
+	_, err = client.ZAdd(ctx, "user", redis.Z{Score: float64(NewUser.Uid), Member: bData}).Result()
+	if err != nil {
+		logrus.Errorln(err)
+	}
+	c.IndentedJSON(http.StatusCreated, items)
 
 }

@@ -225,15 +225,15 @@ paths:
       summary: ping example
       tags:
       - Item
-  /item/:id:
+  /item/:
     delete:
       consumes:
       - application/json
       description: do ping
       parameters:
       - description: 'Id cần xóa  '
-        in: path
-        name: ID
+        in: query
+        name: id
         required: true
         type: integer
       produces:
@@ -252,7 +252,7 @@ paths:
       description: do ping
       parameters:
       - description: ID cần sửa
-        in: path
+        in: query
         name: ID
         required: true
         type: integer
