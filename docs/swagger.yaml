@@ -2,14 +2,12 @@ definitions:
   main.Item:
     properties:
       arr_owner_address:
-        properties:
-          0xce85a994e411901fc9bda228d07f7b66f8320ecd:
-            type: integer
+        additionalProperties:
+          type: integer
         type: object
       arr_owner_uid:
-        properties:
-          "221139":
-            type: integer
+        additionalProperties:
+          type: integer
         type: object
       category_type:
         type: integer
@@ -143,6 +141,8 @@ definitions:
       email:
         type: string
       extend_data:
+        additionalProperties:
+          type: integer
         type: object
       facebook:
         type: string
@@ -225,14 +225,14 @@ paths:
       summary: ping example
       tags:
       - Item
-  /item/:
+  /item/{id}:
     delete:
       consumes:
       - application/json
       description: do ping
       parameters:
-      - description: 'Id cần xóa  '
-        in: query
+      - description: Id cần xóa
+        in: path
         name: id
         required: true
         type: integer
@@ -252,8 +252,8 @@ paths:
       description: do ping
       parameters:
       - description: ID cần sửa
-        in: query
-        name: ID
+        in: path
+        name: id
         required: true
         type: integer
       - description: Thông tin cần sửa
@@ -262,6 +262,35 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/main.Item'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Item'
+      summary: ping example
+      tags:
+      - Item
+  /item/{uid}:
+    get:
+      consumes:
+      - application/json
+      description: do ping
+      parameters:
+      - description: 'ID của người dùng cần tìm kiếm '
+        in: path
+        name: uid
+        required: true
+        type: integer
+      - description: position
+        in: query
+        name: pos
+        type: integer
+      - description: count
+        in: query
+        name: count
+        type: integer
       produces:
       - application/json
       responses:
@@ -293,5 +322,5 @@ paths:
             $ref: '#/definitions/main.User'
       summary: ping example
       tags:
-      - Item
+      - User
 swagger: "2.0"

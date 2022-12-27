@@ -85,7 +85,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/item/": {
+        "/item/{id}": {
             "put": {
                 "description": "do ping",
                 "consumes": [
@@ -102,8 +102,8 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "ID cần sửa",
-                        "name": "ID",
-                        "in": "query",
+                        "name": "id",
+                        "in": "path",
                         "required": true
                     },
                     {
@@ -140,10 +140,54 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Id cần xóa  ",
+                        "description": "Id cần xóa",
                         "name": "id",
-                        "in": "query",
+                        "in": "path",
                         "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.Item"
+                        }
+                    }
+                }
+            }
+        },
+        "/item/{uid}": {
+            "get": {
+                "description": "do ping",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Item"
+                ],
+                "summary": "ping example",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của người dùng cần tìm kiếm ",
+                        "name": "uid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "position",
+                        "name": "pos",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "count",
+                        "name": "count",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -166,7 +210,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Item"
+                    "User"
                 ],
                 "summary": "ping example",
                 "parameters": [
@@ -197,18 +241,14 @@ const docTemplate = `{
             "properties": {
                 "arr_owner_address": {
                     "type": "object",
-                    "properties": {
-                        "0xce85a994e411901fc9bda228d07f7b66f8320ecd": {
-                            "type": "integer"
-                        }
+                    "additionalProperties": {
+                        "type": "integer"
                     }
                 },
                 "arr_owner_uid": {
                     "type": "object",
-                    "properties": {
-                        "221139": {
-                            "type": "integer"
-                        }
+                    "additionalProperties": {
+                        "type": "integer"
                     }
                 },
                 "category_type": {
@@ -410,7 +450,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "extend_data": {
-                    "type": "object"
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
                 },
                 "facebook": {
                     "type": "string"
